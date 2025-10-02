@@ -1139,6 +1139,190 @@ curl -X POST http://localhost:5050/rpc \
 
 ---
 
+## 🖼️ Checkpoint 6: UI Testing
+
+### Mục tiêu
+- Verify token balances displayed correctly
+- Verify swap interface functional
+- Verify slippage visualization working
+- Verify user experience smooth
+
+### Prerequisites
+- ✅ Checkpoint 1-5 hoàn thành
+- ✅ Frontend running tại http://localhost:3000
+- ✅ Wallet connected
+- ✅ Contracts deployed
+
+### UI Requirements cần test:
+- **Token Balance Display**: STRK & BAL balances visible
+- **Swap Interface**: Input fields, buttons, transactions
+- **Slippage Visualization**: Interactive curve, real-time updates
+- **User Experience**: Responsive, error handling, loading states
+
+### 🎯 Frontend UI Testing (Recommended)
+
+**Main Features**:
+- **Header**: STRK balance display
+- **DEX Tab**: BAL balance, swap interfaces, curve visualization
+- **Interactive Curve**: Real-time AMM curve với slippage
+- **Multi-write Transactions**: Auto-approve + swap
+
+**Advantages của Frontend UI**:
+- ✅ Visual feedback
+- ✅ Real-time updates
+- ✅ Interactive elements
+- ✅ User-friendly interface
+
+---
+
+### Test Case 1: Token Balance Display
+
+#### **Test 1.1: Header Balance**
+1. **Navigate**: http://localhost:3000
+2. **Check header area**: Look for STRK balance
+3. **Expected**: "X.XX STRK" format, updates after transactions
+
+#### **Test 1.2: DEX Page Balance**
+1. **Navigate**: http://localhost:3000/dex
+2. **Check BAL balance**: "BAL Balance: X.XX"
+3. **Expected**: Updates after swaps, readable format
+
+#### **Test 1.3: Contract Reserves**
+1. **On DEX page**: Check reserves section
+2. **Expected**: DEX STRK/BAL reserves displayed
+
+---
+
+### Test Case 2: Swap Interface Testing
+
+#### **Test 2.1: STRK to Token Swap**
+1. **Find "STRK to Token Swap" section**
+2. **Input**: `1` STRK
+3. **Check**: Expected output ~0.996 BAL
+4. **Expected**: Input field works, calculation correct
+
+#### **Test 2.2: Token to STRK Swap**
+1. **Find "Token to STRK Swap" section**
+2. **Input**: `1` BAL
+3. **Check**: Expected output ~0.996 STRK
+4. **Expected**: Input field works, calculation correct
+
+#### **Test 2.3: Swap Button**
+1. **Click "Swap STRK to Token"**
+2. **Check wallet popup**: Should show approve + swap
+3. **Expected**: Multi-write transaction works
+
+---
+
+### Test Case 3: Slippage Visualization
+
+#### **Test 3.1: Interactive Curve**
+1. **Locate curve visualization**
+2. **Check elements**: Blue dot, AMM curve, axes
+3. **Expected**: Curve displays correctly, blue dot shows reserves
+
+#### **Test 3.2: Real-time Updates**
+1. **Input**: `1` STRK
+2. **Watch curve**: Red arrow (input), green arrow (output)
+3. **Expected**: Visual feedback, slippage calculation
+
+#### **Test 3.3: Large Swap Warning**
+1. **Input**: `3` STRK
+2. **Check**: Significant slippage visible
+3. **Expected**: Warning indicators, reduced output
+
+#### **Test 3.4: Fee Display**
+1. **Check fee information**: "-0.3% fee"
+2. **Expected**: Fee clearly displayed
+
+---
+
+### Test Case 4: User Experience
+
+#### **Test 4.1: Responsive Design**
+1. **Test screen sizes**: Desktop, tablet, mobile
+2. **Expected**: Layout adapts, curve scales
+
+#### **Test 4.2: Dark/Light Mode**
+1. **Toggle theme** (if available)
+2. **Expected**: Colors adapt, good contrast
+
+#### **Test 4.3: Error Handling**
+1. **Test invalid inputs**: Negative, non-numeric
+2. **Test insufficient balance**
+3. **Expected**: Clear error messages
+
+---
+
+### Test Case 5: Integration Testing
+
+#### **Test 5.1: Balance Updates**
+1. **Note initial balances**
+2. **Execute swap**
+3. **Check**: Balances update immediately
+4. **Expected**: Real-time updates, no refresh needed
+
+#### **Test 5.2: Multiple Operations**
+1. **Execute STRK → BAL swap**
+2. **Execute BAL → STRK swap**
+3. **Expected**: Both work, balances accurate
+
+---
+
+### Checklist Checkpoint 6
+
+#### **Token Balance Display** ✅
+- [ ] STRK balance visible in header
+- [ ] BAL balance visible on DEX page
+- [ ] Contract reserves displayed
+- [ ] Balances update in real-time
+- [ ] Format is user-friendly
+
+#### **Swap Interface** ✅
+- [ ] Input fields accept valid numbers
+- [ ] Expected output calculated correctly
+- [ ] Swap buttons functional
+- [ ] Multi-write transactions work
+- [ ] Wallet integration smooth
+
+#### **Slippage Visualization** ✅
+- [ ] AMM curve displays correctly
+- [ ] Real-time updates work
+- [ ] Visual indicators clear (arrows, dots)
+- [ ] Slippage calculations accurate
+- [ ] Fee information displayed
+
+#### **User Experience** ✅
+- [ ] Responsive design works
+- [ ] Dark/light mode support
+- [ ] Error handling robust
+- [ ] Loading states clear
+- [ ] Smooth interactions
+
+#### **Integration** ✅
+- [ ] Balance updates after transactions
+- [ ] Multiple operations work
+- [ ] No state inconsistencies
+- [ ] Real-time synchronization
+
+---
+
+### Troubleshooting UI Issues
+
+#### **Issue 1: Balances not updating**
+**Solution**: Check contract calls, verify hooks, refresh page
+
+#### **Issue 2: Curve not displaying**
+**Solution**: Check canvas element, verify props, check console
+
+#### **Issue 3: Swap buttons not working**
+**Solution**: Check wallet connection, verify contracts, check parameters
+
+#### **Issue 4: Expected output = 0**
+**Solution**: Verify price function, check reserves, check validation
+
+---
+
 ## 🐛 Common Issues & Troubleshooting
 
 ### Issue 1: Contract not found
@@ -1230,6 +1414,16 @@ curl -X POST http://localhost:5050/rpc \
 - [ ] Withdraw function works
 - [ ] LP token calculations correct
 
+### Checkpoint 6: UI ✅
+- [ ] Token balances displayed
+- [ ] Swap interface functional
+- [ ] Slippage visualized
+- [ ] Interactive curve works
+- [ ] Real-time updates
+- [ ] Responsive design
+- [ ] Error handling
+- [ ] User experience smooth
+
 ---
 
 ## 🎯 Quick Testing Commands
@@ -1277,5 +1471,5 @@ starknet call --address <BALLOONS_ADDRESS> --abi <ABI> --function balance_of --i
 
 **Ngày tạo**: 2025-10-02  
 **Last updated**: 2025-10-02  
-**Status**: Checkpoint 1-5 ✅, Core DEX functionality complete! 🎉
+**Status**: Checkpoint 1-6 ✅, Full DEX with UI complete! 🎉
 
