@@ -133,6 +133,8 @@ mod Dex {
         OwnableEvent: OwnableComponent::Event,
         LiquidityProvided: LiquidityProvided,
         LiquidityRemoved: LiquidityRemoved,
+        StrkToTokenSwap: StrkToTokenSwap,
+        TokenToStrkSwap: TokenToStrkSwap,
     }
 
     /// Event emitted when a STRK to token swap occurs.
@@ -289,7 +291,35 @@ mod Dex {
         /// Returns:
         ///     u256: The amount of tokens received.
         fn strk_to_token(ref self: ContractState, strk_input: u256) -> u256 {
-            0
+            // 1. Get addresses
+            let caller = get_caller_address();
+            let this_contract = get_contract_address();
+            
+            // 2. Get reserves BEFORE transfer
+            let strk_reserves = self.strk_token.read().balance_of(this_contract);
+            let token_reserves = self.token.read().balance_of(this_contract);
+            
+            // 3. Transfer STRK from caller to contract
+            self.strk_token.read().transfer_from(caller, this_contract, strk_input);
+            
+            // 4. Calculate token output using price()
+            let token_output = self.price(strk_input, strk_reserves, token_reserves);
+            
+            // 5. Validate output > 0
+            assert(token_output > 0, 'Insufficient output amount');
+            
+            // 6. Transfer tokens to caller
+            self.token.read().transfer(caller, token_output);
+            
+            // 7. Emit event
+            self.emit(StrkToTokenSwap {
+                swapper: caller,
+                token_output: token_output,
+                strk_input: strk_input,
+            });
+            
+            // 8. Return token output
+            token_output
         }
 
         // Todo Checkpoint 4:  Implement your function token_to_strk here.
@@ -302,7 +332,35 @@ mod Dex {
         /// Returns:
         ///     u256: The amount of STRK received.
         fn token_to_strk(ref self: ContractState, token_input: u256) -> u256 {
-            0
+            // 1. Get addresses
+            let caller = get_caller_address();
+            let this_contract = get_contract_address();
+            
+            // 2. Get reserves BEFORE transfer
+            let token_reserves = self.token.read().balance_of(this_contract);
+            let strk_reserves = self.strk_token.read().balance_of(this_contract);
+            
+            // 3. Transfer tokens from caller to contract
+            self.token.read().transfer_from(caller, this_contract, token_input);
+            
+            // 4. Calculate STRK output using price()
+            let strk_output = self.price(token_input, token_reserves, strk_reserves);
+            
+            // 5. Validate output > 0
+            assert(strk_output > 0, 'Insufficient output amount');
+            
+            // 6. Transfer STRK to caller
+            self.strk_token.read().transfer(caller, strk_output);
+            
+            // 7. Emit event
+            self.emit(TokenToStrkSwap {
+                swapper: caller,
+                tokens_input: token_input,
+                strk_output: strk_output,
+            });
+            
+            // 8. Return STRK output
+            strk_output
         }
 
         // Todo Checkpoint 5:  Implement your function deposit here.

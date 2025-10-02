@@ -297,24 +297,518 @@ yOutput = (997 * 10^39) / (1,000,997 * 10^18)
 
 ---
 
-## 🧪 Checkpoint 4: Trading Functions (Coming Soon)
+## 🧪 Checkpoint 4: Trading Functions
+
+### Mục tiêu
+- Verify functions `strk_to_token()` và `token_to_strk()` hoạt động đúng
+- Verify reserves và balances được update sau mỗi swap
+- Verify events được emit
+- Verify slippage và fees được tính đúng
+
+### Prerequisites
+- ✅ Checkpoint 3 hoàn thành (price function working)
+- ✅ DEX đã được init với reserves (5 BAL : 5 STRK)
+- ✅ User có đủ BAL tokens để swap (approve trước)
+- ✅ User có đủ STRK để swap và trả gas
 
 ### Functions cần test:
-- `strk_to_token()` - Swap STRK → BAL
-- `token_to_strk()` - Swap BAL → STRK
+- `strk_to_token(strk_input: u256) -> u256` - Swap STRK → BAL
+- `token_to_strk(token_input: u256) -> u256` - Swap BAL → STRK
 
-### Prerequisites:
-- Checkpoint 3 hoàn thành
-- Events đã được add vào enum Event
+### 🎯 Frontend UI Testing (Recommended)
 
-### Test scenarios:
-1. Swap STRK → BAL
-2. Swap BAL → STRK
-3. Verify reserves thay đổi
-4. Verify user balances
-5. Check swap events
+**DEX Tab Features**:
+- **STRK to Token Swap**: Input STRK amount → get BAL tokens
+- **Token to STRK Swap**: Input BAL amount → get STRK tokens  
+- **Expected Output Display**: Shows predicted output với slippage
+- **Reserve Display**: Shows current BAL/STRK reserves
+- **Balance Display**: Shows your current token balances
+- **Auto-approve**: Frontend tự động handle approve + swap trong 1 transaction
 
-**Note**: Sẽ update chi tiết khi implement Checkpoint 4.
+**Advantages của Frontend UI**:
+- ✅ User-friendly interface
+- ✅ Real-time balance updates
+- ✅ Expected output preview
+- ✅ Slippage warnings
+- ✅ Auto-approve mechanism
+- ✅ Visual feedback
+- ✅ Error handling với user-friendly messages
+
+**Navigation**:
+- Main page: http://localhost:3000
+- DEX tab: http://localhost:3000/dex
+- Events tab: http://localhost:3000/events
+- Debug Contracts: http://localhost:3000/debug
+
+### 📋 Step-by-Step Frontend Testing Guide
+
+#### **Setup Phase**
+
+1. **Start all services**:
+   ```bash
+   # Terminal 1 - Start devnet
+   make start-devnet
+   
+   # Terminal 2 - Deploy contracts  
+   make deploy
+   
+   # Terminal 3 - Start frontend
+   make start
+   ```
+
+2. **Open browser**: http://localhost:3000
+
+3. **Connect wallet**: Click "Connect Wallet" → chọn Argent X hoặc Braavos
+
+4. **Get STRK tokens** (nếu cần): Click icon 💰 (faucet button) để get 1 STRK
+
+#### **Test Phase 1: STRK → BAL Swap**
+
+1. **Navigate to DEX tab**:
+   - Click tab **"DEX"** trên navigation bar
+   - URL: http://localhost:3000/dex
+
+2. **Locate "STRK to Token Swap" section**:
+   - Input field: "Amount to swap"
+   - Nhập: `1` (STRK)
+   - Button: "Swap STRK to Token"
+
+3. **Execute swap**:
+   - Click button "Swap STRK to Token"
+   - Wallet popup → Click "Approve" (auto-approve + swap)
+   - Wait for transaction confirmation
+
+4. **Verify results**:
+   - ✅ Check "Expected Output" hiển thị ~0.996 BAL
+   - ✅ Check reserves updated trong UI
+   - ✅ Check your BAL balance increased
+
+#### **Test Phase 2: BAL → STRK Swap**
+
+1. **Locate "Token to STRK Swap" section**:
+   - Input field: "Amount to swap" 
+   - Nhập: `1` (BAL)
+   - Button: "Swap Token to STRK"
+
+2. **Execute swap**:
+   - Click button "Swap Token to STRK"
+   - Wallet popup → Click "Approve" (auto-approve + swap)
+   - Wait for transaction confirmation
+
+3. **Verify results**:
+   - ✅ Check "Expected Output" hiển thị ~0.996 STRK
+   - ✅ Check reserves updated trong UI
+   - ✅ Check your STRK balance increased
+
+#### **Test Phase 3: Large Swap (Slippage Test)**
+
+1. **STRK to Token Swap với large amount**:
+   - Input amount: `2` (STRK)
+   - Check "Expected Output" - should show high slippage warning
+   - Click "Swap STRK to Token"
+   - Approve transaction
+
+2. **Verify high slippage**:
+   - ✅ Expected output: ~1.67 BAL (thay vì 2 BAL)
+   - ✅ Slippage: ~16.5% (do swap quá lớn so với reserve)
+
+#### **Test Phase 4: Events Verification**
+
+1. **Navigate to Events tab**:
+   - Click tab **"Events"** trên navigation bar
+   - URL: http://localhost:3000/events
+
+2. **Filter and check events**:
+   - Filter by contract: **Dex**
+   - Look for recent swap events:
+     - ✅ `StrkToTokenSwap` event
+     - ✅ `TokenToStrkSwap` event
+   - Verify event parameters match transaction details
+
+#### **Expected Results Summary**
+
+```
+BEFORE SWAP:
+- DEX BAL reserve: 5.0
+- DEX STRK reserve: 5.0
+- Your BAL: 0
+- Your STRK: X
+
+AFTER SWAP (1 STRK → ~0.996 BAL):
+- DEX BAL reserve: ~4.004
+- DEX STRK reserve: ~6.0
+- Your BAL: ~0.996
+- Your STRK: X - 1 - gas
+```
+
+#### **Frontend UI Features to Verify**
+
+- ✅ **Reserve Display**: Shows current BAL/STRK reserves
+- ✅ **Balance Display**: Shows your current token balances  
+- ✅ **Expected Output**: Shows predicted output với slippage
+- ✅ **Slippage Warning**: For large swaps
+- ✅ **Auto-approve**: Handles approve + swap trong 1 transaction
+- ✅ **Real-time Updates**: Balances và reserves update sau mỗi swap
+
+#### **Troubleshooting Frontend Issues**
+
+**Issue 1: "Insufficient balance"**
+- Solution: Click faucet button 💰 để get STRK
+- Check bạn có đủ tokens để swap
+
+**Issue 2: "Transaction failed"**
+- Solution: 
+  - Check devnet đang chạy: `curl http://localhost:5050/is_alive`
+  - Redeploy contracts: `make deploy`
+  - Restart frontend: `Ctrl+C` → `make start`
+
+**Issue 3: "Expected output = 0"**
+- Solution:
+  - Check Checkpoint 3 (price function) đã implement chưa
+  - Check DEX đã được init chưa (Checkpoint 2)
+
+**Issue 4: "Contract not found"**
+- Solution:
+  - Check deployment: `cat packages/snfoundry/deployments/devnet_latest.json`
+  - Redeploy: `make deploy`
+
+**Issue 5: "Events not showing"**
+- Solution:
+  - Verify events are added to enum Event trong dex.cairo
+  - Check từ Checkpoint 4 trở đi mới có events
+
+---
+
+### Test Case 1: STRK → BAL Swap (Small Amount)
+
+**Scenario**: Swap 1 STRK để lấy BAL tokens
+
+#### Method A: Frontend UI (Recommended) 🎯
+
+1. **Connect Wallet & Navigate**:
+   - Mở http://localhost:3000
+   - Connect wallet (Argent X hoặc Braavos)
+   - Navigate to **"DEX"** tab trong navigation bar
+
+2. **Check Prerequisites**:
+   - Verify bạn có đủ STRK balance (dùng faucet nếu cần)
+   - Check DEX reserves hiển thị: ~5 BAL : ~5 STRK
+
+3. **Execute STRK → BAL Swap**:
+   - Tìm section "STRK to Token Swap"
+   - Input amount: `1` (STRK)
+   - Click button **"Swap STRK to Token"**
+   - Approve transaction trong wallet (sẽ approve STRK và execute swap)
+   - Wait for transaction confirmation
+
+4. **Verify Results**:
+   - Check "Expected Output" hiển thị ~0.996 BAL
+   - Verify reserves updated trong UI
+   - Check your BAL balance increased
+
+#### Method B: Debug Contracts (Alternative)
+
+1. **Prepare**:
+   - Connect wallet với đủ STRK balance
+   - Get STRK balance trước khi swap:
+     - Debug Contracts → STRK → `balance_of`
+     - Input: wallet address của bạn
+
+2. **Execute STRK → BAL Swap**:
+   - Debug Contracts → Dex → `strk_to_token`
+   - Input parameters:
+     ```
+     strk_input: 1000000000000000000
+     (= 1 STRK = 1 * 10^18)
+     ```
+   - Click **"Write"** (không phải Read)
+   - Approve transaction trong wallet
+   - Wait for transaction confirmation
+
+#### Step 3: Verify Results
+1. **Check BAL output** (từ transaction receipt):
+   - Expected: ~996000000000000000 (0.996 BAL)
+   - Based on price function với reserves 5:5
+
+2. **Check DEX reserves changed**:
+   - Debug Contracts → Dex → `get_total_liquidity` (should still be 5)
+   - Debug Contracts → Balloons → `balance_of` (DEX address)
+   - Debug Contracts → STRK → `balance_of` (DEX address)
+
+3. **Check user balances**:
+   - Debug Contracts → Balloons → `balance_of` (your wallet)
+   - Debug Contracts → STRK → `balance_of` (your wallet)
+
+#### Expected Results:
+```
+BEFORE SWAP:
+- DEX BAL reserve: 5000000000000000000 (5 BAL)
+- DEX STRK reserve: 5000000000000000000 (5 STRK)
+- Your BAL: 0 (or previous amount)
+- Your STRK: X amount
+
+AFTER SWAP (1 STRK → ~0.996 BAL):
+- DEX BAL reserve: ~4004000000000000000 (4.004 BAL)
+- DEX STRK reserve: ~6000000000000000000 (6 STRK)
+- Your BAL: ~996000000000000000 (0.996 BAL)
+- Your STRK: X - 1000000000000000000 - gas
+```
+
+---
+
+### Test Case 2: BAL → STRK Swap (Small Amount)
+
+**Scenario**: Swap 1 BAL để lấy STRK tokens
+
+#### Method A: Frontend UI (Recommended) 🎯
+
+1. **Connect Wallet & Navigate**:
+   - Mở http://localhost:3000
+   - Connect wallet (Argent X hoặc Braavos)
+   - Navigate to **"DEX"** tab
+
+2. **Check Prerequisites**:
+   - Verify bạn có BAL tokens (nếu chưa có, swap STRK→BAL trước)
+   - Check DEX reserves hiển thị
+
+3. **Execute BAL → STRK Swap**:
+   - Tìm section "Token to STRK Swap"
+   - Input amount: `1` (BAL)
+   - Click button **"Swap Token to STRK"**
+   - Approve transaction trong wallet (sẽ approve BAL và execute swap)
+   - Wait for transaction confirmation
+
+4. **Verify Results**:
+   - Check "Expected Output" hiển thị ~0.996 STRK
+   - Verify reserves updated trong UI
+   - Check your STRK balance increased
+
+#### Method B: Debug Contracts (Alternative)
+
+1. **Approve BAL (Required!)**:
+   - Debug Contracts → Balloons → `approve`
+   - Input parameters:
+     ```
+     spender: [DEX contract address]
+     amount: 1000000000000000000
+     (= 1 BAL)
+     ```
+   - Click **"Write"** và approve trong wallet
+
+2. **Execute BAL → STRK Swap**:
+   - Debug Contracts → Dex → `token_to_strk`
+   - Input parameters:
+     ```
+     token_input: 1000000000000000000
+     (= 1 BAL)
+     ```
+   - Click **"Write"** và approve transaction
+
+3. **Verify Results**:
+   - **Check STRK output**: Expected ~996000000000000000 (0.996 STRK)
+   - **Check reserves updated**:
+     - DEX BAL reserve: ~6000000000000000000 (6 BAL)
+     - DEX STRK reserve: ~4004000000000000000 (4.004 STRK)
+
+---
+
+### Test Case 3: Large Swap (High Slippage)
+
+**Scenario**: Swap 2 STRK (40% of reserve) để test slippage
+
+#### Method A: Frontend UI (Recommended) 🎯
+
+1. **Navigate to DEX Tab**:
+   - Mở http://localhost:3000 → DEX tab
+   - Connect wallet
+
+2. **Execute Large Swap**:
+   - Tìm section "STRK to Token Swap"
+   - Input amount: `2` (STRK)
+   - Check "Expected Output" - should show high slippage warning
+   - Click **"Swap STRK to Token"**
+   - Approve transaction trong wallet
+
+3. **Verify High Slippage**:
+   - Expected output: ~1.67 BAL (thay vì 2 BAL)
+   - Slippage: ~16.5% (do swap quá lớn so với reserve)
+   - Check reserves updated trong UI
+
+#### Method B: Debug Contracts (Alternative)
+
+1. **Execute Large Swap**:
+   - Debug Contracts → Dex → `strk_to_token`
+   - Input parameters:
+     ```
+     strk_input: 2000000000000000000
+     (= 2 STRK)
+     ```
+   - Click **"Write"** và approve
+
+2. **Expected Results**:
+   ```
+   Expected output: ~1.67 BAL (thay vì 2 BAL)
+   Slippage: ~16.5% (do swap quá lớn so với reserve)
+   New reserves:
+   - DEX BAL: ~3.33 BAL
+   - DEX STRK: ~7 STRK
+   ```
+
+---
+
+### Test Case 4: Edge Cases
+
+#### Test 4.1: Swap with insufficient approval
+1. Try `token_to_strk` với amount > approved amount
+2. **Expected**: Transaction should fail/revert
+
+#### Test 4.2: Swap with insufficient balance
+1. Try swap với amount > wallet balance
+2. **Expected**: Transaction should fail/revert
+
+#### Test 4.3: Swap zero amount
+1. Try `strk_to_token(0)`
+2. **Expected**: Should return 0 hoặc revert
+
+---
+
+### Test Case 5: Events Verification
+
+#### Method A: Frontend Events Tab (Recommended) 🎯
+
+1. **Navigate to Events**:
+   - Sau khi swap thành công, go to `/events` page
+   - Filter by contract: **Dex**
+   - Look for recent swap events
+
+2. **Expected Events**:
+   ```
+   StrkToTokenSwap {
+     swapper: [your wallet address],
+     token_output: [amount received],
+     strk_input: [amount sent]
+   }
+   
+   TokenToStrkSwap {
+     swapper: [your wallet address],
+     tokens_input: [amount sent],
+     strk_output: [amount received]
+   }
+   ```
+
+#### Method B: Transaction Receipt (Alternative)
+
+1. **Check Transaction Receipt**:
+   - Sau khi swap thành công, check transaction receipt
+   - Look for emitted events trong receipt
+
+2. **Expected events** (same as above)
+
+---
+
+### Manual Calculation Verification
+
+Verify swap results bằng công thức AMM:
+
+**For STRK → BAL (1 STRK):**
+```
+x_input = 1 * 10^18 (STRK)
+x_reserves = 5 * 10^18 (STRK reserves)
+y_reserves = 5 * 10^18 (BAL reserves)
+
+xInputWithFee = 1 * 10^18 * 997 = 997 * 10^18
+numerator = 5 * 10^18 * 997 * 10^18 = 4985 * 10^36
+denominator = (5 * 10^18 * 1000) + (997 * 10^18) = 5997 * 10^18
+yOutput = numerator / denominator ≈ 0.996 * 10^18
+```
+
+---
+
+### Checklist Checkpoint 4
+
+#### Basic Functionality ✅
+- [ ] `strk_to_token()` works với small amount
+- [ ] `token_to_strk()` works với small amount  
+- [ ] Approve mechanism works correctly
+- [ ] Functions return expected amounts
+
+#### Reserve Updates ✅
+- [ ] DEX BAL reserve updates after STRK→BAL swap
+- [ ] DEX STRK reserve updates after BAL→STRK swap
+- [ ] Total liquidity remains constant (5 LP tokens)
+- [ ] Reserves maintain AMM relationship
+
+#### User Balances ✅
+- [ ] User BAL balance increases after STRK→BAL
+- [ ] User STRK balance increases after BAL→STRK
+- [ ] Gas fees deducted correctly
+- [ ] Approval amounts updated correctly
+
+#### Edge Cases ✅
+- [ ] Insufficient approval → transaction fails
+- [ ] Insufficient balance → transaction fails
+- [ ] Zero amount swap → returns 0 or reverts
+- [ ] Large swap → high slippage observed
+
+#### Events ✅
+- [ ] `StrkToTokenSwap` event emitted correctly
+- [ ] `TokenToStrkSwap` event emitted correctly
+- [ ] Event parameters match transaction details
+- [ ] Events visible in `/events` page
+
+#### Price Consistency ✅
+- [ ] Swap output matches `price()` function calculation
+- [ ] Fee 0.3% applied correctly
+- [ ] Slippage increases with larger swaps
+- [ ] No reverts with valid inputs
+
+---
+
+### Troubleshooting Checkpoint 4
+
+#### Issue 1: "Insufficient allowance"
+**Solution**: Call `approve()` on Balloons contract first
+
+#### Issue 2: "Insufficient balance"
+**Solution**: 
+- Check STRK balance for STRK→BAL swaps
+- Check BAL balance for BAL→STRK swaps
+- Use faucet if needed
+
+#### Issue 3: "Transaction reverted"
+**Solution**:
+- Check function implementation in dex.cairo
+- Verify events are added to enum Event
+- Check reserves are initialized
+
+#### Issue 4: "Wrong output amount"
+**Solution**:
+- Verify price function implementation
+- Check reserves are correct (5:5 ratio)
+- Verify fee calculation (997/1000)
+
+---
+
+### Quick Test Commands
+
+```bash
+# Get current reserves
+curl -X POST http://localhost:5050/rpc \
+  -H "Content-Type: application/json" \
+  -d '{
+    "jsonrpc": "2.0",
+    "method": "starknet_call",
+    "params": {
+      "request": {
+        "contract_address": "[DEX_ADDRESS]",
+        "entry_point_selector": "get_total_liquidity",
+        "calldata": []
+      },
+      "block_id": "latest"
+    },
+    "id": 1
+  }'
+```
 
 ---
 
@@ -406,13 +900,15 @@ yOutput = (997 * 10^39) / (1,000,997 * 10^18)
 - [ ] Fee 0.3% applied
 - [ ] No reverts on valid inputs
 
-### Checkpoint 4: Trading 🔄
+### Checkpoint 4: Trading ✅
 - [ ] Can swap STRK → BAL
 - [ ] Can swap BAL → STRK
 - [ ] Reserves update correctly
 - [ ] Balances update correctly
 - [ ] Events emitted
-- [ ] (Sẽ update khi implement)
+- [ ] Approve mechanism works
+- [ ] Edge cases handled
+- [ ] Price consistency verified
 
 ### Checkpoint 5: Liquidity 🔄
 - [ ] Can add liquidity
@@ -469,5 +965,5 @@ starknet call --address <BALLOONS_ADDRESS> --abi <ABI> --function balance_of --i
 
 **Ngày tạo**: 2025-10-02  
 **Last updated**: 2025-10-02  
-**Status**: Checkpoint 1-3 ✅, Checkpoint 4-5 coming soon 🔄
+**Status**: Checkpoint 1-4 ✅, Checkpoint 5 coming soon 🔄
 
