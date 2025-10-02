@@ -116,6 +116,7 @@ mod Balloons {
         let symbol = "BAL";
         self.erc20.initializer(name, symbol);
         // Mint the initial supply of tokens to the recipient
+        self.erc20.mint(recipient, initial_supply);
     }
 
     #[abi(embed_v0)]
