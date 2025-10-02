@@ -241,7 +241,17 @@ mod Dex {
         /// Returns:
         ///     u256: The output amount of STRK.
         fn price(self: @ContractState, x_input: u256, x_reserves: u256, y_reserves: u256) -> u256 {
-            0
+            // 1. Apply 0.3% fee
+            let x_input_with_fee = x_input * 997;
+            
+            // 2. Calculate numerator
+            let numerator = y_reserves * x_input_with_fee;
+            
+            // 3. Calculate denominator
+            let denominator = (x_reserves * 1000) + x_input_with_fee;
+            
+            // 4. Return output
+            numerator / denominator
         }
 
         // Todo Checkpoint 5:  Implement your function get_liquidity here.
