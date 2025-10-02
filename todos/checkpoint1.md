@@ -43,15 +43,15 @@ Bạn có thể dùng Makefile (đã tích hợp chuỗi lệnh) cho nhanh:
 
 1) Khởi động Devnet (Docker):
 ```bash
-make start-devnet
+yarn start-devnet
 ```
 2) Deploy contracts lên devnet:
 ```bash
-make deploy
+yarn deploy
 ```
 3) Start frontend (Next.js):
 ```bash
-make start
+yarn start
 ```
 
 Mở giao diện: `http://localhost:3000` → vào tab `Debug Contracts` để kiểm tra contract, storage, events.

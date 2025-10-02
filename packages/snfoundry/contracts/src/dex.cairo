@@ -202,7 +202,31 @@ mod Dex {
         /// Returns:
         ///     (u256, u256): The amounts of tokens and STRK initialized.
         fn init(ref self: ContractState, tokens: u256, strk: u256) -> (u256, u256) {
-            (0, 0)
+            // Assert that the DEX has not been initialized yet
+            assert(self.total_liquidity.read() == 0, 'DEX: already initialized');
+            
+            // Get addresses
+            let caller = get_caller_address();
+            let this_contract = get_contract_address();
+            
+            // Transfer tokens from caller to DEX contract
+            self.token.read().transfer_from(caller, this_contract, tokens);
+            
+            // Transfer STRK from caller to DEX contract
+            self.strk_token.read().transfer_from(caller, this_contract, strk);
+            
+            // Calculate initial liquidity (using tokens as liquidity for simplicity)
+            // For equal ratio deposits (1:1), liquidity = tokens
+            let liquidity = tokens;
+            
+            // Set total liquidity
+            self.total_liquidity.write(liquidity);
+            
+            // Set caller's liquidity
+            self.liquidity.write(caller, liquidity);
+            
+            // Return the amounts of tokens and STRK initialized
+            (tokens, strk)
         }
 
         // Todo Checkpoint 3:  Implement your function price here.
