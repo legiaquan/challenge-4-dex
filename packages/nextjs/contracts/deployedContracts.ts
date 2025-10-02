@@ -7,7 +7,7 @@ const deployedContracts = {
   devnet: {
     Balloons: {
       address:
-        "0x543e9b452532e409990d16bdcb86c13df46bcdf4010d9c50aec30a10fc03a9f",
+        "0xc1b8ebd807291c5a2ad522e7d9f268e3a2beea89523533dac4a6b27540f999",
       abi: [
         {
           type: "impl",
@@ -315,7 +315,7 @@ const deployedContracts = {
     },
     Dex: {
       address:
-        "0x628fb352c75b49cb7a608c7dfb7c9da3ff6083a5035b94d83301616e4c0de5b",
+        "0x5d2da828f7e2b5863fff2b1e194eb8947a64302ad3fe2384a7eadf6993005db",
       abi: [
         {
           type: "impl",
@@ -735,7 +735,7 @@ const deployedContracts = {
         },
       ],
       classHash:
-        "0x1d96f83204ca1281d04e9c08af3d65a9207f7ca842805fa14d5519d04c204c3",
+        "0x4dc411afc24a5414a9fab735710b0218fc0d72b8c4d709552652f11db880092",
     },
   },
 } as const;

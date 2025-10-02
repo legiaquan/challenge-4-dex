@@ -812,20 +812,330 @@ curl -X POST http://localhost:5050/rpc \
 
 ---
 
-## 💧 Checkpoint 5: Liquidity Functions (Coming Soon)
+## 💧 Checkpoint 5: Liquidity Functions
+
+### Mục tiêu
+- Verify functions `deposit()` và `withdraw()` hoạt động đúng
+- Verify LP token calculations
+- Verify multiple liquidity providers
+- Verify events được emit
+- Verify proportional withdrawals
+
+### Prerequisites
+- ✅ Checkpoint 4 hoàn thành (trading functions working)
+- ✅ User có đủ STRK và BAL tokens để deposit
+- ✅ User đã approve BAL tokens cho DEX contract
 
 ### Functions cần test:
-- `deposit()` - Add liquidity
-- `withdraw()` - Remove liquidity
-- `get_deposit_token_amount()` - Calculate token amount needed
+- `deposit(strk_amount: u256) -> u256` - Add liquidity và mint LP tokens
+- `withdraw(amount: u256) -> (u256, u256)` - Remove liquidity và burn LP tokens
+- `get_deposit_token_amount(strk_amount: u256) -> u256` - Calculate token amount needed
+- `get_liquidity(lp_address: ContractAddress) -> u256` - Get user's LP tokens
+- `get_total_liquidity() -> u256` - Get total pool liquidity
 
-### Test scenarios:
-1. Add liquidity
-2. Remove liquidity
-3. Multiple LPs
-4. LP token calculations
+### 🎯 Frontend UI Testing (Recommended)
 
-**Note**: Sẽ update chi tiết khi implement Checkpoint 5.
+**DEX Tab Features**:
+- **Deposit Section**: Input STRK amount → calculate token amount needed
+- **Withdraw Section**: Input LP amount → calculate STRK + BAL output
+- **LP Balance Display**: Show user's current LP tokens
+- **Total Liquidity Display**: Show pool's total liquidity
+
+**Advantages của Frontend UI**:
+- ✅ User-friendly interface
+- ✅ Real-time balance updates
+- ✅ Expected output preview
+- ✅ Auto-approve mechanism
+- ✅ Visual feedback
+- ✅ LP token calculations displayed
+
+---
+
+### Test Case 1: First Deposit
+
+**Scenario**: User đầu tiên deposit liquidity vào empty pool
+
+#### Method A: Frontend UI (Recommended) 🎯
+
+1. **Navigate to DEX Tab**:
+   - Mở http://localhost:3000/dex
+   - Connect wallet
+
+2. **Prepare for Deposit**:
+   - Get STRK tokens (faucet nếu cần)
+   - Get BAL tokens (swap STRK→BAL nếu cần)
+   - Approve BAL tokens cho DEX contract
+
+3. **Execute First Deposit**:
+   - Tìm section "Add Liquidity" hoặc "Deposit"
+   - Input STRK amount: `1`
+   - Check required BAL amount (should be 1 BAL)
+   - Click "Deposit" button
+   - Approve transactions trong wallet
+
+4. **Verify Results**:
+   - ✅ LP tokens received = 1
+   - ✅ Total liquidity = 1
+   - ✅ User liquidity = 1
+   - ✅ Reserves = 6 STRK : 6 BAL (5 + 1)
+
+#### Method B: Debug Contracts (Alternative)
+
+1. **Approve BAL tokens**:
+   - Debug Contracts → Balloons → `approve`
+   - Input: `spender: [DEX address]`, `amount: 1000000000000000000` (1 BAL)
+
+2. **Execute Deposit**:
+   - Debug Contracts → Dex → `deposit`
+   - Input: `strk_amount: 1000000000000000000` (1 STRK)
+   - Click "Write" và approve
+
+3. **Verify Results**:
+   - Check `get_liquidity` với user address
+   - Check `get_total_liquidity`
+   - Check reserves updated
+
+---
+
+### Test Case 2: Subsequent Deposit
+
+**Scenario**: User thứ 2 deposit liquidity vào pool đã có liquidity
+
+#### Method A: Frontend UI (Recommended) 🎯
+
+1. **Use Different Wallet**:
+   - Connect wallet khác (hoặc tạo new account)
+   - Get STRK và BAL tokens
+   - Approve BAL tokens
+
+2. **Execute Subsequent Deposit**:
+   - Input STRK amount: `1`
+   - Check required BAL amount (should be 1 BAL)
+   - Click "Deposit" button
+   - Approve transactions
+
+3. **Verify Results**:
+   - ✅ LP tokens received < 1 (proportional)
+   - ✅ Total liquidity increased
+   - ✅ User liquidity = LP tokens received
+   - ✅ Reserves = 7 STRK : 7 BAL
+
+#### Expected LP Calculation:
+```
+LP = (strk_amount * total_liquidity) / strk_reserves
+LP = (1 * 1) / 6 = 0.167 LP tokens
+```
+
+---
+
+### Test Case 3: Partial Withdraw
+
+**Scenario**: User rút một phần LP tokens
+
+#### Method A: Frontend UI (Recommended) 🎯
+
+1. **Navigate to Withdraw Section**:
+   - Tìm section "Remove Liquidity" hoặc "Withdraw"
+   - Input LP amount: `0.5` (hoặc một phần LP tokens)
+
+2. **Execute Withdraw**:
+   - Check expected STRK + BAL output
+   - Click "Withdraw" button
+   - Approve transaction
+
+3. **Verify Results**:
+   - ✅ User received proportional STRK + BAL
+   - ✅ LP tokens decreased
+   - ✅ Total liquidity decreased
+   - ✅ Reserves decreased proportionally
+
+#### Method B: Debug Contracts (Alternative)
+
+1. **Execute Withdraw**:
+   - Debug Contracts → Dex → `withdraw`
+   - Input: `amount: 500000000000000000` (0.5 LP tokens)
+   - Click "Write" và approve
+
+2. **Verify Results**:
+   - Check returned values: (strk_amount, token_amount)
+   - Check user liquidity decreased
+   - Check total liquidity decreased
+
+---
+
+### Test Case 4: Full Withdraw
+
+**Scenario**: User rút tất cả LP tokens
+
+#### Execute Full Withdraw
+
+1. **Input All LP Tokens**:
+   - Input amount = user's current LP balance
+   - Check expected output
+
+2. **Verify Results**:
+   - ✅ User received all deposited tokens back
+   - ✅ User liquidity = 0
+   - ✅ Total liquidity decreased
+   - ✅ Reserves decreased by user's contribution
+
+---
+
+### Test Case 5: Multiple Users
+
+**Scenario**: Test với multiple liquidity providers
+
+#### Setup Multiple Users
+
+1. **User A Deposit**:
+   - Connect wallet A
+   - Deposit 2 STRK + 2 BAL
+   - Note: LP tokens received
+
+2. **User B Deposit**:
+   - Connect wallet B
+   - Deposit 1 STRK + 1 BAL
+   - Note: LP tokens received (should be less than User A)
+
+3. **Verify Independence**:
+   - User A withdraw một phần
+   - User B withdraw một phần
+   - Verify không ảnh hưởng lẫn nhau
+
+---
+
+### Test Case 6: Edge Cases
+
+#### Test 6.1: Insufficient Liquidity
+1. Try withdraw với amount > user's LP balance
+2. **Expected**: Transaction should fail/revert
+
+#### Test 6.2: Zero Amount Withdraw
+1. Try withdraw với amount = 0
+2. **Expected**: Should return (0, 0) hoặc revert
+
+#### Test 6.3: Large Deposit
+1. Deposit với amount lớn (e.g., 10 STRK)
+2. **Expected**: LP tokens calculated correctly
+3. **Verify**: Reserves updated correctly
+
+---
+
+### Test Case 7: Events Verification
+
+#### Check Liquidity Events
+
+1. **Navigate to Events Tab**:
+   - Go to http://localhost:3000/events
+   - Filter by contract: **Dex**
+
+2. **Expected Events**:
+   ```
+   LiquidityProvided {
+     liquidity_provider: [user address],
+     liquidity_minted: [LP tokens minted],
+     strk_input: [STRK deposited],
+     tokens_input: [BAL deposited]
+   }
+   
+   LiquidityRemoved {
+     liquidity_remover: [user address],
+     liquidity_withdrawn: [LP tokens burned],
+     tokens_output: [BAL received],
+     strk_output: [STRK received]
+   }
+   ```
+
+---
+
+### Checklist Checkpoint 5
+
+#### Basic Functionality ✅
+- [ ] `deposit()` works với small amount
+- [ ] `withdraw()` works với small amount
+- [ ] `get_deposit_token_amount()` calculates correctly
+- [ ] `get_liquidity()` returns user's LP tokens
+- [ ] `get_total_liquidity()` returns total pool liquidity
+
+#### LP Token Calculations ✅
+- [ ] First deposit mints correct LP tokens
+- [ ] Subsequent deposits mint proportional LP tokens
+- [ ] Withdraw calculations are proportional
+- [ ] Total liquidity updates correctly
+
+#### Multiple Users ✅
+- [ ] Multiple users can deposit independently
+- [ ] Each user gets proportional LP tokens
+- [ ] Users can withdraw independently
+- [ ] No interference between users
+
+#### Edge Cases ✅
+- [ ] Insufficient liquidity → transaction fails
+- [ ] Zero amount withdraw → returns (0, 0) or reverts
+- [ ] Large deposits work correctly
+- [ ] Full withdraw works correctly
+
+#### Events ✅
+- [ ] `LiquidityProvided` event emitted correctly
+- [ ] `LiquidityRemoved` event emitted correctly
+- [ ] Event parameters match transaction details
+- [ ] Events visible in `/events` page
+
+#### Storage Updates ✅
+- [ ] `total_liquidity` updates correctly
+- [ ] `liquidity[address]` updates correctly
+- [ ] Reserves update correctly
+- [ ] User balances update correctly
+
+---
+
+### Troubleshooting Checkpoint 5
+
+#### Issue 1: "Insufficient allowance"
+**Solution**: Call `approve()` on Balloons contract first
+
+#### Issue 2: "Insufficient liquidity"
+**Solution**: Check user has enough LP tokens to withdraw
+
+#### Issue 3: "Transaction reverted"
+**Solution**:
+- Check function implementation in dex.cairo
+- Verify events are added to enum Event
+- Check reserves are sufficient
+
+#### Issue 4: "Wrong LP token amount"
+**Solution**:
+- Verify LP calculation logic
+- Check total_liquidity is correct
+- Verify reserves are correct
+
+#### Issue 5: "Events not showing"
+**Solution**:
+- Verify events are added to enum Event trong dex.cairo
+- Check Events tab filters correctly
+
+---
+
+### Quick Test Commands
+
+```bash
+# Check current liquidity
+curl -X POST http://localhost:5050/rpc \
+  -H "Content-Type: application/json" \
+  -d '{
+    "jsonrpc": "2.0",
+    "method": "starknet_call",
+    "params": {
+      "request": {
+        "contract_address": "[DEX_ADDRESS]",
+        "entry_point_selector": "get_total_liquidity",
+        "calldata": []
+      },
+      "block_id": "latest"
+    },
+    "id": 1
+  }'
+```
 
 ---
 
@@ -910,13 +1220,15 @@ curl -X POST http://localhost:5050/rpc \
 - [ ] Edge cases handled
 - [ ] Price consistency verified
 
-### Checkpoint 5: Liquidity 🔄
+### Checkpoint 5: Liquidity ✅
 - [ ] Can add liquidity
 - [ ] Can remove liquidity
 - [ ] LP tokens calculated correctly
 - [ ] Multiple LPs work
 - [ ] Events emitted
-- [ ] (Sẽ update khi implement)
+- [ ] Deposit function works
+- [ ] Withdraw function works
+- [ ] LP token calculations correct
 
 ---
 
@@ -965,5 +1277,5 @@ starknet call --address <BALLOONS_ADDRESS> --abi <ABI> --function balance_of --i
 
 **Ngày tạo**: 2025-10-02  
 **Last updated**: 2025-10-02  
-**Status**: Checkpoint 1-4 ✅, Checkpoint 5 coming soon 🔄
+**Status**: Checkpoint 1-5 ✅, Core DEX functionality complete! 🎉
 
