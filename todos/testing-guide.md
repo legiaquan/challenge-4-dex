@@ -1424,6 +1424,14 @@ curl -X POST http://localhost:5050/rpc \
 - [ ] Error handling
 - [ ] User experience smooth
 
+### Checkpoint 7: Deploy Contracts 🔄
+- [ ] Network config updated to Sepolia
+- [ ] Environment file configured
+- [ ] STRK tokens obtained from faucet
+- [ ] Contracts deployed to Sepolia
+- [ ] Frontend connects to Sepolia
+- [ ] All functionality tested on testnet
+
 ---
 
 ## 🎯 Quick Testing Commands
@@ -1471,5 +1479,5 @@ starknet call --address <BALLOONS_ADDRESS> --abi <ABI> --function balance_of --i
 
 **Ngày tạo**: 2025-10-02  
 **Last updated**: 2025-10-02  
-**Status**: Checkpoint 1-6 ✅, Full DEX with UI complete! 🎉
+**Status**: Checkpoint 1-6 ✅, Checkpoint 7 ready for deployment! 🚀
 
